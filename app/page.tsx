@@ -25,10 +25,13 @@ export default function ContactPage() {
     setError(false);
 
     try {
-      const res = await fetch('/api/send', {
+      const res = await fetch('/.netlify/functions/send', {  // <-- Netlify function URL
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify(formData),
+        body: JSON.stringify({
+          name: formData.name.trim(),
+          message: formData.message.trim(),
+        }),
       });
 
       if (!res.ok) throw new Error('Failed to send');

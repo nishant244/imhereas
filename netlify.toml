@@ -1,0 +1,12 @@
+[build]
+  command = "npm run build"
+  functions = "netlify/functions"
+  publish = ".next"  # or your build output folder
+
+[[redirects]]
+  from = "/api/*"
+  to = "/.netlify/functions/:splat"
+  status = 200
+
+[functions]
+  directory = "netlify/functions"

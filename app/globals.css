@@ -1,15 +1,9 @@
 @import "tailwindcss";
 
+/* Root variables for light and dark mode */
 :root {
   --background: #ffffff;
   --foreground: #171717;
-}
-
-@theme inline {
-  --color-background: var(--background);
-  --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
 }
 
 @media (prefers-color-scheme: dark) {
@@ -19,8 +13,110 @@
   }
 }
 
+/* Global styles */
+html,
 body {
-  background: var(--background);
+  max-width: 100vw;
+  overflow-x: hidden;
+}
+
+body {
   color: var(--foreground);
+  background: var(--background);
   font-family: Arial, Helvetica, sans-serif;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+* {
+  box-sizing: border-box;
+  padding: 0;
+  margin: 0;
+}
+
+a {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Loader styles */
+.loader {
+  position: relative;
+  width: 65px; /* ~60% of 108px */
+  display: flex;
+  justify-content: space-between;
+  overflow: visible; /* allow shadows to spread */
+  z-index: 0; /* base layer */
+}
+
+.loader::before,
+.loader::after {
+  content: '';
+  display: inline-block;
+  width: 30px;   /* 60% of 48px */
+  height: 30px;
+  background-color: #FFF;
+  background-image: radial-gradient(circle 8px, #0d161b 100%, transparent 0);
+  background-repeat: no-repeat;
+  border-radius: 50%;
+  animation: eyeMove 10s infinite, blink 10s infinite;
+
+  /* Circular, smooth, fading shadow */
+  box-shadow:
+    0 0 8px 3px rgba(0, 0, 0, 0.12),
+    0 0 15px 7px rgba(0, 0, 0, 0.08),
+    0 0 25px 15px rgba(0, 0, 0, 0.04);
+
+  position: relative;
+  z-index: -1; /* shadow behind other components */
+  transition: box-shadow 0.3s ease;
+}
+
+/* Keyframes for loader animations */
+@keyframes eyeMove {
+  0%, 10% {
+    background-position: 0px 0px;
+  }
+  13%, 40% {
+    background-position: -9px 0px;
+  }
+  43%, 70% {
+    background-position: 9px 0px;
+  }
+  73%, 90% {
+    background-position: 0px 9px;
+  }
+  93%, 100% {
+    background-position: 0px 0px;
+  }
+}
+
+@keyframes blink {
+  0%, 10%, 12%, 20%, 22%, 40%, 42%, 60%, 62%, 70%, 72%, 90%, 92%, 98%, 100% {
+    height: 30px;
+  }
+  11%, 21%, 41%, 61%, 71%, 91%, 99% {
+    height: 11px; /* 60% of 18px */
+  }
+}
+
+input:focus-within,
+textarea:focus-within {
+  border-color: var(--foreground);
+}
+
+/* Dark mode color scheme for html */
+@media (prefers-color-scheme: dark) {
+  html {
+    color-scheme: dark;
+  }
+}
+
+/* 👇 Hide horizontal scrollbar but allow swiping on touch devices */
+.scrollbar-hide::-webkit-scrollbar {
+  display: none;
+}
+.scrollbar-hide {
+  -ms-overflow-style: none;  /* IE and Edge */
+  scrollbar-width: none;     /* Firefox */
 }

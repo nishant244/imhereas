@@ -1,27 +1,47 @@
 'use client';
 
-import { useState, ChangeEvent, FormEvent, useEffect } from 'react';
+import { useState, ChangeEvent, FormEvent, useEffect, useRef } from 'react';
 
-const allowedNames = ['cutie', 'dragon', 'cld']; // ✅ Added
+const allowedNames = ['cutie', 'dragon', 'cld'];
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({ name: '', message: '' });
   const [submitted, setSubmitted] = useState(false);
   const [isNameAllowed, setIsNameAllowed] = useState(false);
-  const [hasStoredName, setHasStoredName] = useState(false); // ✅ NEW
+  const [hasStoredName, setHasStoredName] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
 
+  const [contentEditableSupported, setContentEditableSupported] = useState(true);
+
+  // <-- Add ref here
+  const contentEditableRef = useRef<HTMLDivElement>(null);
+
   useEffect(() => {
-    sessionStorage.clear(); 
-    const savedName = sessionStorage.getItem('allowedName'); // ✅ session-based
-    if (savedName && allowedNames.includes(savedName.toLowerCase())) {
-      setFormData(prev => ({ ...prev, name: savedName }));
-      setIsNameAllowed(true);
-      setHasStoredName(true); // ✅ NEW
+    if (typeof document !== 'undefined') {
+      const testDiv = document.createElement('div');
+      if (!('isContentEditable' in testDiv)) {
+        setContentEditableSupported(false);
+      }
     }
   }, []);
 
+  useEffect(() => {
+    sessionStorage.clear();
+    const savedName = sessionStorage.getItem('allowedName');
+    if (savedName && allowedNames.includes(savedName.toLowerCase())) {
+      setFormData(prev => ({ ...prev, name: savedName }));
+      setIsNameAllowed(true);
+      setHasStoredName(true);
+    }
+  }, []);
+
+  // <-- Clear contentEditable div when message resets
+  useEffect(() => {
+    if (formData.message === '' && contentEditableRef.current) {
+      contentEditableRef.current.textContent = '';
+    }
+  }, [formData.message]);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -34,8 +54,8 @@ export default function ContactPage() {
       setIsNameAllowed(isValid);
 
       if (isValid) {
-        sessionStorage.setItem('allowedName', value.trim()); // ✅ session-based
-        setHasStoredName(true); // ✅ NEW
+        sessionStorage.setItem('allowedName', value.trim());
+        setHasStoredName(true);
       }
     }
   };
@@ -45,7 +65,7 @@ export default function ContactPage() {
     setError(false);
 
     try {
-      const res = await fetch('/.netlify/functions/send', {  // <-- Netlify function URL
+      const res = await fetch('/.netlify/functions/send', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -57,7 +77,7 @@ export default function ContactPage() {
       if (!res.ok) throw new Error('Failed to send');
 
       setSubmitted(true);
-      setFormData(prev => ({ ...prev, message: '' }));
+      setFormData(prev => ({ ...prev, message: '' })); // clears message
       setLoading(false);
       return true;
     } catch {
@@ -90,7 +110,8 @@ export default function ContactPage() {
           Hey there!
         </h1>
 
-        <div className="my-4 h-10 flex justify-center items-center shadow-3xl shadow-gray-950"
+        <div
+          className="my-4 h-10 flex justify-center items-center shadow-3xl shadow-gray-950"
           style={{ paddingBottom: '0.5rem' }}
         >
           {loading && <div className="loader invert-svg"></div>}
@@ -117,28 +138,56 @@ export default function ContactPage() {
                 required
                 value={formData.name}
                 onChange={handleChange}
+                autoComplete="off"
+                spellCheck={false}
                 className="p-2 h-10 border outline-none rounded-3xl w-full text-lg focus-within:border-black focus-within:border-2 text-center shadow-3xl shadow-gray-950"
               />
             )}
 
             {isNameAllowed && (
-              <div className="flex w-full items-center space-x-3">
-                <div className='flex-1 h-10 border rounded-l-3xl focus-within:border-2'
-                  style={{ boxSizing: 'border-box', paddingRight: '1rem' }}
+              <div className="flex w-full items-center space-x-3 ">
+                <div
+                  className="h-10 flex-1 border rounded-l-3xl overflow-hidden focus-within:border-2"
+                  style={{ paddingRight: '1rem' }}
                 >
-                  <textarea
-                    key="message-area"
-                    name="message"
-                    required
-                    value={formData.message}
-                    onChange={handleChange}
-                    className="h-full w-full border-none outline-none rounded-l-3xl leading-normal px-4 resize-none overflow-x-auto overflow-y-hidden whitespace-nowrap flex-1 text-lg text-left scrollbar-hide"
-                    style={{ boxSizing: 'border-box', padding: '0.40625rem 1rem' }}
-                  />
+                  {contentEditableSupported ? (
+                    <div
+                      ref={contentEditableRef} // <-- add ref here
+                      contentEditable
+                      suppressContentEditableWarning
+                      onInput={(e) => {
+                        const value = e.currentTarget.textContent || '';
+                        setFormData(prev => ({ ...prev, message: value }));
+                        setSubmitted(false);
+                        setError(false);
+                      }}
+                      className="h-full w-full outline-none text-lg text-left leading-[2.5rem] whitespace-nowrap"
+                      style={{
+                        paddingLeft: '1rem',
+                        paddingRight: '1rem',
+                        boxSizing: 'border-box',
+                        lineHeight: '2.5rem',
+                        overflowX: 'auto',
+                        whiteSpace: 'nowrap',
+                        overflow: 'hidden',
+                      }}
+                    />
+                  ) : (
+                    <textarea
+                      key="message-area"
+                      name="message"
+                      required
+                      value={formData.message}
+                      onChange={handleChange}
+                      className="h-full w-full border-none outline-none rounded-l-3xl leading-normal px-4 resize-none overflow-x-auto overflow-y-hidden whitespace-nowrap flex-1 text-lg text-left scrollbar-hide"
+                      style={{ boxSizing: 'border-box', padding: '0.40625rem 1rem' }}
+                    />
+                  )}
                 </div>
+
                 <button
                   type="submit"
-                  className=" rounded-r-3xl shadow-2xl shadow-gray-950 flex items-center justify-center w-16 h-10 hover:bg-gray-900 active:scale-95 transition-all duration-150 disabled:opacity-50"
+                  className="rounded-r-3xl shadow-2xl shadow-gray-950 flex items-center justify-center w-16 h-10 hover:bg-gray-900 active:scale-95 transition-all duration-150 disabled:opacity-50"
                   style={{
                     backgroundColor: 'var(--foreground)',
                     color: 'var(--background)',

@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Here As Always",
-  description: "Hey there! I am here as always",
+  description: "Hey there! I am here as always because I'm Batman",
   icons: {
     icon: "/favicon.ico", // Ensure this file is in your /public folder
   },

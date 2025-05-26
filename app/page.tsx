@@ -14,8 +14,8 @@ export default function ContactPage() {
 
   const [contentEditableSupported, setContentEditableSupported] = useState(true);
 
-  // <-- Add ref here
-  const contentEditableRef = useRef<HTMLDivElement>(null);
+  // Ref for the contentEditable div
+  const messageRef = useRef<HTMLDivElement>(null);
 
   useEffect(() => {
     if (typeof document !== 'undefined') {
@@ -35,13 +35,6 @@ export default function ContactPage() {
       setHasStoredName(true);
     }
   }, []);
-
-  // <-- Clear contentEditable div when message resets
-  useEffect(() => {
-    if (formData.message === '' && contentEditableRef.current) {
-      contentEditableRef.current.textContent = '';
-    }
-  }, [formData.message]);
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -77,7 +70,15 @@ export default function ContactPage() {
       if (!res.ok) throw new Error('Failed to send');
 
       setSubmitted(true);
-      setFormData(prev => ({ ...prev, message: '' })); // clears message
+
+      // Clear React state first
+      setFormData(prev => ({ ...prev, message: '' }));
+
+      // Clear contentEditable div content manually after state update
+      if (messageRef.current) {
+        messageRef.current.textContent = '';
+      }
+
       setLoading(false);
       return true;
     } catch {
@@ -116,11 +117,11 @@ export default function ContactPage() {
         >
           {loading && <div className="loader invert-svg"></div>}
           {!loading && submitted && (
-            <p className="text-green-600 text-xlnetl text-center">Got it!</p>
+            <p className="text-green-600 text-xl font-medium text-center">Got it!</p>
           )}
           {!loading && error && (
             <p
-              className="text-red-600 text-xl text-center"
+              className="text-red-600 text-xl font-medium text-center"
               style={{ textShadow: '2px 2px 4px rgba(0, 0, 0, 0.35)' }}
             >
               Try again...
@@ -128,7 +129,7 @@ export default function ContactPage() {
           )}
         </div>
 
-        <div className="shadow-2xl shadow-gray-950  rounded-3xl px-1 overflow-hidden">
+        <div className="shadow-2xl shadow-gray-950 rounded-3xl px-1 overflow-hidden">
           <form onSubmit={handleSubmit} className="flex flex-col items-center gap-6 w-full p-6">
             {!hasStoredName && (
               <input
@@ -145,14 +146,14 @@ export default function ContactPage() {
             )}
 
             {isNameAllowed && (
-              <div className="flex w-full items-center space-x-3 ">
+              <div className="flex w-full items-center space-x-3">
                 <div
-                  className="h-10 flex-1 border rounded-l-3xl overflow-hidden focus-within:border-2"
+                  className="h-10 flex-1 border rounded-l-3xl overflow-hidden flex items-center out focus-within:border-2"
                   style={{ paddingRight: '1rem' }}
                 >
                   {contentEditableSupported ? (
                     <div
-                      ref={contentEditableRef} // <-- add ref here
+                      ref={messageRef}
                       contentEditable
                       suppressContentEditableWarning
                       onInput={(e) => {
@@ -170,17 +171,27 @@ export default function ContactPage() {
                         overflowX: 'auto',
                         whiteSpace: 'nowrap',
                         overflow: 'hidden',
+                        display: 'flex',
+                        alignItems: 'center',
                       }}
                     />
                   ) : (
-                    <textarea
-                      key="message-area"
+                    <input
+                      key="message-input"
+                      type="text"
                       name="message"
                       required
                       value={formData.message}
                       onChange={handleChange}
-                      className="h-full w-full border-none outline-none rounded-l-3xl leading-normal px-4 resize-none overflow-x-auto overflow-y-hidden whitespace-nowrap flex-1 text-lg text-left scrollbar-hide"
-                      style={{ boxSizing: 'border-box', padding: '0.40625rem 1rem' }}
+                      className="h-full w-full border-none outline-none rounded-l-3xl px-4 text-lg text-left"
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        height: '100%',
+                        boxSizing: 'border-box',
+                        paddingTop: '0',
+                        paddingBottom: '0',
+                      }}
                     />
                   )}
                 </div>

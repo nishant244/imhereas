@@ -14,7 +14,10 @@ const geistMono = Geist_Mono({
 
 export const metadata: Metadata = {
   title: "Here As Always",
-  description: "hey there i am here as always",
+  description: "Hey there! I am here as always",
+  icons: {
+    icon: "/favicon.ico", // Ensure this file is in your /public folder
+  },
 };
 
 export default function RootLayout({

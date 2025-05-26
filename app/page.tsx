@@ -1,13 +1,27 @@
 'use client';
 
-import { useState, ChangeEvent, FormEvent } from 'react';
+import { useState, ChangeEvent, FormEvent, useEffect } from 'react';
+
+const allowedNames = ['cutie', 'dragon', 'cld']; // ✅ Added
 
 export default function ContactPage() {
   const [formData, setFormData] = useState({ name: '', message: '' });
   const [submitted, setSubmitted] = useState(false);
   const [isNameAllowed, setIsNameAllowed] = useState(false);
+  const [hasStoredName, setHasStoredName] = useState(false); // ✅ NEW
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(false);
+
+  useEffect(() => {
+    sessionStorage.clear(); 
+    const savedName = sessionStorage.getItem('allowedName'); // ✅ session-based
+    if (savedName && allowedNames.includes(savedName.toLowerCase())) {
+      setFormData(prev => ({ ...prev, name: savedName }));
+      setIsNameAllowed(true);
+      setHasStoredName(true); // ✅ NEW
+    }
+  }, []);
+
 
   const handleChange = (e: ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
@@ -16,7 +30,13 @@ export default function ContactPage() {
     setError(false);
 
     if (name === 'name') {
-      setIsNameAllowed(['cutie', 'dragon', 'cld'].includes(value.trim().toLowerCase()));
+      const isValid = allowedNames.includes(value.trim().toLowerCase());
+      setIsNameAllowed(isValid);
+
+      if (isValid) {
+        sessionStorage.setItem('allowedName', value.trim()); // ✅ session-based
+        setHasStoredName(true); // ✅ NEW
+      }
     }
   };
 
@@ -37,8 +57,7 @@ export default function ContactPage() {
       if (!res.ok) throw new Error('Failed to send');
 
       setSubmitted(true);
-      setFormData({ name: '', message: '' });
-      setIsNameAllowed(false);
+      setFormData(prev => ({ ...prev, message: '' }));
       setLoading(false);
       return true;
     } catch {
@@ -76,11 +95,11 @@ export default function ContactPage() {
         >
           {loading && <div className="loader invert-svg"></div>}
           {!loading && submitted && (
-            <p className="text-green-600 text-xl font-bold text-center">Got it!</p>
+            <p className="text-green-600 text-xlnetl text-center">Got it!</p>
           )}
           {!loading && error && (
             <p
-              className="text-red-600 text-xl font-bold text-center"
+              className="text-red-600 text-xl text-center"
               style={{ textShadow: '2px 2px 4px rgba(0, 0, 0, 0.35)' }}
             >
               Try again...
@@ -90,7 +109,7 @@ export default function ContactPage() {
 
         <div className="shadow-2xl shadow-gray-950  rounded-3xl px-1 overflow-hidden">
           <form onSubmit={handleSubmit} className="flex flex-col items-center gap-6 w-full p-6">
-            {!isNameAllowed && (
+            {!hasStoredName && (
               <input
                 key="name-input"
                 type="text"

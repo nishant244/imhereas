@@ -56,7 +56,7 @@ export const handler: Handler = async (event: HandlerEvent): Promise<HandlerResp
   const mailOptions = {
     from: EMAIL_USER,
     to: EMAIL_RECEIVER,
-    subject: `Contact form submission from ${name}`,
+    subject: `A messege from ${name}`,
     text: message,
   };
 
